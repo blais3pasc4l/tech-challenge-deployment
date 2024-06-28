@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-microservice
+  namespace: tech.prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-microservice
+  template:
+    metadata:
+      labels:
+        app: python-microservice
+    spec:
+      containers:
+      - name: python-microservice
+        image: your-docker-repo/python-microservice:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: "3Gi"
+          requests:
+            memory: "2Gi"
+        env:
+        - name: ENV
+          value: "production"
+      nodeSelector:
+        kubernetes.io/network: "internal prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-microservice
+  namespace: tech.prod
+spec:
+  selector:
+    app: python-microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

@@ -1,0 +1,89 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  pythonVersion: '3.9'
+
+stages:
+- stage: Build
+  displayName: Build Stage
+  jobs:
+  - job: Build
+    displayName: Build Job
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+        addToPath: true
+
+    - script: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
+
+    - script: |
+        python setup.py build
+      displayName: 'Build application'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+      displayName: 'Publish build artifacts'
+
+- stage: Test
+  displayName: Test Stage
+  dependsOn: Build
+  jobs:
+  - job: Test
+    displayName: Test Job
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+        addToPath: true
+
+    - script: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
+
+    - script: |
+        source venv/bin/activate
+        pytest
+      displayName: 'Run tests'
+
+- stage: Publish
+  displayName: Publish Stage
+  dependsOn: Test
+  jobs:
+  - job: Publish
+    displayName: Publish Job
+    steps:
+    - script: |
+        docker build -t your-docker-repo/python-microservice:$(Build.BuildId) .
+      displayName: 'Build Docker image'
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'your-container-registry-service-connection'
+        repository: 'your-docker-repo/python-microservice'
+        command: 'push'
+        tags: |
+          $(Build.BuildId)
+      displayName: 'Push Docker image'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+      displayName: 'Publish Docker image artifact'
