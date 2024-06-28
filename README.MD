@@ -52,6 +52,9 @@ To resize and cache an image, you can make a request to the Worker URL with the 
 https://example.com/resize?image=https://example.com/image.jpg&width=400&height=300
 ```
 ### observability-stack-diagram
+
+
+```bash
                     +---------------------+
                     |     End Users       |
                     +---------------------+
@@ -100,6 +103,8 @@ https://example.com/resize?image=https://example.com/image.jpg&width=400&height=
 |  +-----------------------------------------------+  |
 |                                                     |
 +-----------------------------------------------------+
+
+```
 
 ### Summary
 Worker Creation: A new Worker is created in Cloudflare.
